@@ -42,32 +42,50 @@ spawn:
 
  pid = fork();
 
- if (pid) {
-//printf("I'm the parent\n");
-//printf("PPID %d\n", getpid());
+ if (pid) { // Parent
   waitpid(pid, &cstatus, 0);
 
+/*** Kept as comment as an example on how to skip an
+ *** instruction.
   // Skip halting instruction below:
   if (instruction == 0x4f ||
       instruction == 0x4e   ) {
    instruction++;
    goto spawn;
   }
+***/
 
   if (WIFEXITED(cstatus)) {
     printf("Instruction: 0x%x is valid.\n", instruction);
-  //printf("Child exited fine\n");
-  } else {
-    printf("Instruction: 0x%x is invalid.\n", instruction);
-  //printf("Something went wrong to the child %d. Exited not normally.\n", pid);
-  }
+
+  } else { // Abnormal exit, cause must be investigated further...
+
+      if (WIFSIGNALED(cstatus)) {
+        if (WTERMSIG(cstatus) == SIGALRM) {       // Timeouted
+          printf("Instruction: 0x%x is valid. Probably a push or a jump/branch "
+                 "instruction.\n", instruction);
+
+        } else if (WTERMSIG(cstatus) == SIGILL) { // Illegal instruction
+          printf("Instruction: 0x%x is invalid.\n", instruction);
+
+        } else {                                  // Cause not understood yet
+          printf("Instruction: 0x%x is invalid. (unknown cause)\n", instruction);
+
+        }
+     }
+   }
 
   instruction++;
   goto spawn;
 
- } else {
+ } else { // Child
+
+  // Child must execute the jited code in a certain amount of time. This is most
+  // necessary to avoid special kinds of lock like those as self pushed address
+  // + return case on x64 (PPC64 has no dynamic stack thus push/pop instruction).
+  alarm(1);
+
+  // Execute the parent's JITed code.
   codeCache(instruction);
-//printf("I'm the child\n");
-//printf("CPID: %d\n", getpid());
  }
 }
