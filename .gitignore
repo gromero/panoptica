@@ -1,1 +1,3 @@
 seeker
+*.o
+*.log
