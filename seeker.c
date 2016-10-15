@@ -62,11 +62,16 @@ spawn:
 
       if (WIFSIGNALED(cstatus)) {
         if (WTERMSIG(cstatus) == SIGALRM) {       // Timeouted
-          printf("Instruction: 0x%x is valid. Probably a push or a jump/branch "
-                 "instruction.\n", instruction);
+          printf("Instruction: 0x%x is valid. It halts, so probably a self push "
+                 "or jump/branch instruction.\n", instruction);
 
         } else if (WTERMSIG(cstatus) == SIGILL) { // Illegal instruction
           printf("Instruction: 0x%x is invalid.\n", instruction);
+
+        } else if (WTERMSIG(cstatus) == SIGSEGV) { // Load/Store instruction
+          printf("Instruction: 0x%x is probably valid. Load/store "
+                 "or some instruction fusion with the ending return byte\n",
+                  instruction);
 
         } else {                                  // Cause not understood yet
           printf("Instruction: 0x%x is invalid. (unknown cause)\n", instruction);
