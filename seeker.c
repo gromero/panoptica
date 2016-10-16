@@ -6,23 +6,24 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-void codeCache(unsigned int instr)
+void jiter(void *p, size_t n, int dbgl)
 {
- //asm(".long 0xBABEBEEF");
- //asm("nop");
- //int data[] = "0xBABEBEEF"
-
- //unsigned char data[] = {0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3};
- unsigned char data[] = {0x90, 0x90, 0x90, 0x90, 0xC3};
- data[0] = instr;
  int (*f)(void);
  void *mem;
+ unsigned char terminator = 0xC3; // retq, just on x64 for sure ;-)
 
- mem = mmap(NULL, 5 /* 6 bytes */, PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_PRIVATE, -1, 0);
- memcpy(mem,data, 5 );
+ mem = mmap(NULL, n + 1, PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_PRIVATE, -1, 0);
+ memcpy(mem, p, n);
+ memcpy(mem+n, &terminator, 1);
 
 #if DEBUG
- printf("0x%x\n", data);
+ unsigned char *bytecode;
+ bytecode = (unsigned char *) mem;
+
+ printf("CODECACHE: \n");
+ for (int i = 0; i < n + 1; ++i)
+   printf("0x%.2X\n",  *(bytecode+i));
+ printf("\n");
 #endif
 
  f = mem ;
@@ -37,7 +38,7 @@ int main(void)
  unsigned int instruction = 0x00000000;
 
 spawn:
- if ( !(instruction <= 0xFFFFFF))
+ if ( !(instruction <= 0xFFFFFF) )
   exit(0);
 
  pid = fork();
@@ -90,7 +91,7 @@ spawn:
   // + return case on x64 (PPC64 has no dynamic stack thus push/pop instruction).
   alarm(1);
 
-  // Execute the parent's JITed code.
-  codeCache(instruction);
+  // Execute generated instruction code.
+  jiter((void *)&instruction,4,0);
  }
 }
