@@ -70,8 +70,9 @@ spawn:
           printf("Instruction: 0x%x is invalid.\n", instruction);
 
         } else if (WTERMSIG(cstatus) == SIGSEGV) { // Load/Store instruction
-          printf("Instruction: 0x%x is probably valid. Load/store "
-                 "or some instruction fusion with the ending return byte\n",
+          printf("Instruction: 0x%x is probably valid. Load/store, "
+                 "fusion with the ending return byte, "
+                 "or a self modified jit.\n",
                   instruction);
 
         } else {                                  // Cause not understood yet
