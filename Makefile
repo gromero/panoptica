@@ -1,8 +1,9 @@
 %.o:	%.c
-	gcc -DDEBUG -c -g -O0 $< -o $@
+	gcc -c -g -O0 $< -o $@
 
 seeker:	seeker.o
-	gcc -DDEBUG $< -o seeker
+	gcc -g -O0 $< -o seeker
 
 clean:
 	rm -fr seeker
+	rm -fr *.o
